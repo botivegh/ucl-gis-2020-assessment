@@ -1,0 +1,1 @@
+rel[boundary=postal_code][postal_code="1097"];(rel(around:30000)[boundary=postal_code][postal_code];>;);out geom;
