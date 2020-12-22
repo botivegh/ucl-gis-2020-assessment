@@ -37,8 +37,13 @@ st_crs(SchoolData) <- projcrs
 SchoolData <- SchoolData %>%
   st_transform(.,23700)
 
+## Top cities
 
-
+TopCities <- read_csv("https://simplemaps.com/static/data/country-cities/hu/hu.csv")
+TopCities <- st_as_sf(x= TopCities,
+                       coords=c('lng','lat'),
+                       crs=projcrs)
+st_crs(TopCities) <- projcrs 
 
 ### Hungary Shape
 HungaryShapeMap <- st_read(here::here("shapefiles", "gadm36_HUN_shp", "gadm36_HUN_2.shp"))
@@ -136,7 +141,7 @@ for (l in lang_cols) {
   HungaryLanugageAll<- merge(HungaryLanugageAll %>% as.data.frame(),HungarySchoolsLanguage %>% as.data.frame(), by.x="GID_2", by.y="gid_2", no_dups=TRUE )
   
   print(l)
-  
+   
 }
 
 
@@ -162,14 +167,21 @@ HungaryLanugageAll <- st_as_sf(HungaryLanugageAll)
 HungaryLanugageAll <- HungaryLanugageAll %>% 
   mutate(., all_score = all_prodsum / all_stud )
 
+#https://colorbrewer2.org/#type=sequential&scheme=Purples&n=5
+
 ### MAP OF THE LANGUAGE TOTAL SCORE
 tm_shape(HungaryLanugageAll) +
   tm_polygons("all_score",
               style="jenks",
-              palette="PuOr",
+              palette="BuPu",
               midpoint=NA,
+              border.alpha = 0,
               popup.vars=c("NAME_2", "all_score"),
-              title="Language Score")
+              title="Language Score") +
+tm_shape(slice_head(TopCities, n=10)) + 
+  tm_dots(col = 'grey', legend.z = 'city'  , size = 0.3) +
+  tm_text('city', size=0.8, ymod = 0.7)
+  
 
 
 
@@ -180,6 +192,10 @@ sum(HungaryLanugageAll$all_stud)
 
 ################### Moran's I - Gobal or Local?? 
 library(spdep)
+
+HungaryLanugageAll <- HungaryLanugageAll %>% dplyr::filter(!is.na(all_score))
+
+
 
 coordsW <- HungaryLanugageAll%>%
   st_centroid()%>%
@@ -209,4 +225,43 @@ I_HungaryLanugageAll_Global_Density <- HungaryLanugageAll %>%
   as.vector()%>%
   spdep::moran.test(., HungaryLanugageAll.lw)
 
+HungaryLanugageAll.lw
+
 I_HungaryLanugageAll_Global_Density
+
+## Missing the Local Moran's I and its visualization ... later.. .
+ 
+
+
+#######################################################
+####               Location Quotient         ##########
+#######################################################
+
+
+
+HungaryLanugageAll
+
+LQ<-function(hu_attribute){
+  hu_attribute /mean(hu_attribute)
+}
+LQ_mod<-function(hu_attribute){
+  hu_attribute / 80
+}
+
+HungaryLanugageAll$all_score_LQ <- LQ(HungaryLanugageAll$all_score)
+
+tmap_mode("plot")
+
+#https://colorbrewer2.org/#type=sequential&scheme=Purples&n=5
+
+tm_shape(HungaryLanugageAll) +
+  tm_polygons("all_score_LQ",
+              style="jenks",
+              palette="RdBu",
+              legend.hist = TRUE,
+              midpoint=NA,
+              popup.vars=c("NAME_2", "all_score_LQ"),
+              title="Language Score")
+
+
+
