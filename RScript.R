@@ -241,12 +241,14 @@ I_HungaryLanugageAll_Global_Density
 
 HungaryLanugageAll
 
+### can be nicer by taking the average by highschool not by area
 LQ<-function(hu_attribute){
   hu_attribute /mean(hu_attribute)
 }
 LQ_mod<-function(hu_attribute){
   hu_attribute / 80
 }
+
 
 HungaryLanugageAll$all_score_LQ <- LQ(HungaryLanugageAll$all_score)
 
@@ -261,7 +263,44 @@ tm_shape(HungaryLanugageAll) +
               legend.hist = TRUE,
               midpoint=NA,
               popup.vars=c("NAME_2", "all_score_LQ"),
-              title="Language Score")
+              title="Language Score") + 
+  tm_shape(slice_head(TopCities, n=10)) + 
+  tm_dots(col = 'grey', legend.z = 'city'  , size = 0.3) +
+  tm_text('city', size=0.8, ymod = 0.7)
 
+
+#### GINI ?? 
+# https://rdrr.io/cran/lctools/man/spGini.html
+install.packages("lctools")
+
+coordsC <- HungaryLanugageAll %>% 
+  st_centroid()
+
+
+
+lctools::spGini(Coords=coordsW, x=HungaryLanugageAll$all_score, Bandwidth = 12, WType = 'Binary' )
+
+
+#### Getis Ord G*
+
+Gi_FL_score_Local_Density <-  HungaryLanugageAll %>%
+  pull(all_score) %>%
+  as.vector()%>%
+  localG(., HungaryLanugageAll.lw)
+
+
+HungaryLanugageAll <- HungaryLanugageAll %>%
+  mutate(density_G = as.numeric(Gi_FL_score_Local_Density))
+
+
+breaks1<-c(-1000,-2.58,-1.96,-1.65,1.65,1.96,2.58,1000)
+
+tm_shape(HungaryLanugageAll) +
+  tm_polygons("density_G",
+              palette="-RdBu",
+              style="fixed",
+              breaks=breaks1,
+              midpoint=NA,
+              title="Gi*, FL capabilities Hot-Cold Spot in Hungary")
 
 
