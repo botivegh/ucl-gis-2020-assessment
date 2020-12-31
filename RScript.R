@@ -169,28 +169,85 @@ HungaryLanugageAll <- HungaryLanugageAll %>%
 
 #https://colorbrewer2.org/#type=sequential&scheme=Purples&n=5
 
+tmap_mode("plot")
 ### MAP OF THE LANGUAGE TOTAL SCORE
 tm_shape(HungaryLanugageAll) +
-  tm_polygons("all_score",
-              style="jenks",
-              palette="BuPu",
+  tm_polygons(col="all_score",
+              style = "jenks",
+              palette = c('#ffffff','#ebf0ff','#bdd7e7' , '#3182bd', '#08519c'),
+              #breaks = c(0, 50, 70, 80,110),
               midpoint=NA,
-              border.alpha = 0,
+              legend.hist = TRUE,
+              border.alpha = 0.3,
               popup.vars=c("NAME_2", "all_score"),
               title="Language Score") +
 tm_shape(slice_head(TopCities, n=10)) + 
-  tm_dots(col = 'grey', legend.z = 'city'  , size = 0.3) +
-  tm_text('city', size=0.8, ymod = 0.7)
-  
+  tm_dots(col = 'red', legend.z = 'city'  , size = 0.2) +
+  #tm_symbols(col = 'grey'  , size = 'population') +
+tm_shape(slice_head(TopCities, n=1)) + 
+ tm_text('city',col='white',shadow = FALSE , size=0.6, ymod = 0.3,fontface="bold") + 
+tm_layout(  legend.hist.bg.color = '#dedede',
+            legend.title.size = 1,
+            legend.outside.size=0.5,
+            legend.outside = TRUE,
+            legend.outside.position = 'right',
+            frame=FALSE
+            ) +
+tm_scale_bar(position = c("right", "bottom"), text.size = 0.40)+
+tm_compass(type = "8star", size = 1, position = c(0.83, 0.15))
 
+
+  
 
 
 sum(HungaryLanugageAll$all_prodsum)
 sum(HungaryLanugageAll$all_stud)
 
+#######################################################
+####               Location Quotient         ##########
+#######################################################
 
 
-################### Moran's I - Gobal or Local?? 
+### can be nicer by taking the average by highschool not by area
+## Calcualte LQ columns
+HungaryLanugageAll$all_score_LQ<-ifelse(is.na(HungaryLanugageAll$all_score), NA, HungaryLanugageAll$all_score/mean(HungaryLanugageAll$all_score, na.rm = TRUE))
+
+
+
+#https://colorbrewer2.org/#type=sequential&scheme=Purples&n=5
+ 
+tmap_mode("plot")
+tm_shape(HungaryLanugageAll) +
+  tm_polygons(col="all_score_LQ",
+              style = "jenks",
+              palette = 'RdBu',
+              #breaks = c(0, 50, 70, 80,110),
+              midpoint=NA,
+              legend.hist = TRUE,
+              border.alpha = 0.3,
+              popup.vars=c("NAME_2", "all_score"),
+              title="Language Score Location Quotient") +
+  tm_shape(slice_head(TopCities, n=10)) + 
+  tm_dots(col = 'red', legend.z = 'city'  , size = 0.2) +
+  #tm_symbols(col = 'grey'  , size = 'population') +
+  tm_shape(slice_head(TopCities, n=1)) + 
+  tm_text('city',col='white',shadow = FALSE , size=0.6, ymod = 0.3,fontface="bold") + 
+  tm_layout(  legend.hist.bg.color = '#dedede',
+              legend.title.size = 1,
+              legend.outside.size=0.5,
+              legend.outside = TRUE,
+              legend.outside.position = 'right',
+              frame=FALSE
+  ) +
+  tm_scale_bar(position = c("right", "bottom"), text.size = 0.40)+
+  tm_compass(type = "8star", size = 1, position = c(0.83, 0.15))
+
+
+is.na(HungaryLanugageAll)
+
+###############################################################################################
+########                 Moran's I - Gobal               ##################################### 
+############################################################################################### 
 library(spdep)
 
 HungaryLanugageAll <- HungaryLanugageAll %>% dplyr::filter(!is.na(all_score))
@@ -233,56 +290,11 @@ I_HungaryLanugageAll_Global_Density
  
 
 
-#######################################################
-####               Location Quotient         ##########
-#######################################################
 
 
-
-HungaryLanugageAll
-
-### can be nicer by taking the average by highschool not by area
-LQ<-function(hu_attribute){
-  hu_attribute /mean(hu_attribute)
-}
-LQ_mod<-function(hu_attribute){
-  hu_attribute / 80
-}
-
-
-HungaryLanugageAll$all_score_LQ <- LQ(HungaryLanugageAll$all_score)
-
-tmap_mode("plot")
-
-#https://colorbrewer2.org/#type=sequential&scheme=Purples&n=5
-
-tm_shape(HungaryLanugageAll) +
-  tm_polygons("all_score_LQ",
-              style="jenks",
-              palette="RdBu",
-              legend.hist = TRUE,
-              midpoint=NA,
-              popup.vars=c("NAME_2", "all_score_LQ"),
-              title="Language Score") + 
-  tm_shape(slice_head(TopCities, n=10)) + 
-  tm_dots(col = 'grey', legend.z = 'city'  , size = 0.3) +
-  tm_text('city', size=0.8, ymod = 0.7)
-
-
-#### GINI ?? 
-# https://rdrr.io/cran/lctools/man/spGini.html
-install.packages("lctools")
-
-coordsC <- HungaryLanugageAll %>% 
-  st_centroid()
-
-
-
-lctools::spGini(Coords=coordsW, x=HungaryLanugageAll$all_score, Bandwidth = 12, WType = 'Binary' )
-
-
-#### Getis Ord G*
-
+###########################################################
+####              Getis Ord G*                #############
+##########################################################
 Gi_FL_score_Local_Density <-  HungaryLanugageAll %>%
   pull(all_score) %>%
   as.vector()%>%
@@ -301,6 +313,21 @@ tm_shape(HungaryLanugageAll) +
               style="fixed",
               breaks=breaks1,
               midpoint=NA,
-              title="Gi*, FL capabilities Hot-Cold Spot in Hungary")
+              title="Gi*, FL capabilities Hot-Cold Spot in Hungary")+
+tm_shape(slice_head(TopCities, n=10)) + 
+  tm_dots(col = 'red', legend.z = 'city'  , size = 0.2) +
+  #tm_symbols(col = 'grey'  , size = 'population') +
+  tm_shape(slice_head(TopCities, n=1)) + 
+  tm_text('city',col='white',shadow = FALSE , size=0.6, ymod = 0.3,fontface="bold") + 
+  tm_layout(  legend.hist.bg.color = '#dedede',
+              legend.title.size = 1,
+              legend.outside.size=0.5,
+              legend.outside = TRUE,
+              legend.outside.position = 'right',
+              frame=FALSE
+  ) +
+  tm_scale_bar(position = c("right", "bottom"), text.size = 0.40)+
+  tm_compass(type = "8star", size = 1, position = c(0.83, 0.15))
+
 
 
