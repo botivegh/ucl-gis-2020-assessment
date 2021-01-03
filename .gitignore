@@ -2,7 +2,7 @@ shapefiles/
 DataIdeas/
 /.ipynb_checkpoints
 /.Rproj.user
-/.Rproj.user
+.*
 .RData
 .Rhistory
 .Rproj.user

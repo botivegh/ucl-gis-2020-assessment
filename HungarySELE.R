@@ -3,15 +3,10 @@
 library(spatstat)
 library(here)
 library(sp)
-#library(rgeos)
 library(maptools)
-#library(GISTools)
 library(tmap)
 library(sf)
-#library(geojson)
-#library(geojsonio)
 library(tmaptools)
-#library(stringr)
 library(dplyr)
 library(readr)
 library(glue)
@@ -19,7 +14,7 @@ library(glue)
 ## Interactive Viewing
 tmap_mode("view")
 
-SchoolData <- read_csv(here::here('data', 'school_data_Google_location_highschool_cleaned.csv'), 
+SchoolData <- read_csv('https://github.com/botivegh/ucl-gis-2020-assessment/blob/main/data/school_data_Google_location_highschool_cleaned.csv?raw=true', 
          na = c("NA", "n/a", ""))
 ### Filter for highschools
 SchoolData <- SchoolData %>% dplyr::filter(!is.na(hu_midlevel))

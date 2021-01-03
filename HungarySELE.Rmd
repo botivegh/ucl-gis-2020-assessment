@@ -1,5 +1,5 @@
 ---
-title: "CASA QIS Courseword code"
+title: "UCL 2020-2021 CASA QIS Assessment"
 author: "Botond Vegh"
 date: "03/01/2021"
 output: html_document
@@ -64,7 +64,7 @@ TopCities <- st_as_sf(x= TopCities,
 st_crs(TopCities) <- projcrs 
 
 ### Hungary Shape
-HungaryShapeMap <- st_read('https://biogeo.ucdavis.edu/data/gadm3.6/Rsf/gadm36_HUN_2_sf.rds')
+HungaryShapeMap <- st_read(here::here('data', 'gadm36_HUN_shp','gadm36_HUN_2.shp'))
 ## Hungary's epsg: 23700
 HungaryShapeMap <- HungaryShapeMap %>%
   st_transform(., 23700)
