@@ -9,8 +9,7 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-# Hungarian Secondary School Leaving Exam Analisys
-
+# Hungarian Secondary School Leaving Exam Analysis
 
 ### Importing libraries
 
@@ -31,10 +30,10 @@ library(spdep)
 ```
 
 
-### Reading Data Secodnary School Data
+### Reading Data Secondary School Data
 - Secondary school data and Hungary LAU1 shape files
 - Filter out the school without SELE and remove duplicates
-- Set projection and transformit to st format
+- Set projection and transform it to st format
 
 ```{r warning=FALSE, message=FALSE}
 SchoolData <- read_csv(here::here('data', 'school_data_Google_location_highschool_cleaned.csv'), 
