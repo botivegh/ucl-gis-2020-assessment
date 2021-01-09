@@ -31,7 +31,7 @@ library(spdep)
 
 
 ### Reading Data Secondary School Data
-- Secondary school data and Hungary LAU1 shape files
+- Secondary school data (source oktatas.hu)
 - Filter out the school without SELE and remove duplicates
 - Set projection and transform it to st format
 
@@ -52,7 +52,8 @@ SchoolData <- SchoolData %>%
 ```
 
 ### Reading Hungary Shapefile from GDAM and Top Cities
-
+- Top cities data source is simplemaps.com
+- Hungary shape file data source is GDAM
 
 ```{r warning=FALSE, message=FALSE}
 
@@ -71,6 +72,8 @@ HungaryShapeMap <- HungaryShapeMap %>%
 ```
 
 ### Merge the School data with the Shapefile
+- merge data and clean column headers with janitor
+- calcualte school density of areas
 
 ```{r warning=FALSE, message=FALSE}
 HungarySchools <- HungaryShapeMap%>%
@@ -83,7 +86,8 @@ HungarySchools <- HungaryShapeMap%>%
 
 
 ### Create the language score for all languages and create an overall language score
-
+- Looping through all the foreign languages. Both intermediate and advance level SELE exams are included in the calculations.
+- Generate the unified FLPS (foreign language proficiency score)
 
 ```{r warning=FALSE, message=FALSE}
  
@@ -164,7 +168,7 @@ HungaryLanugageAll <- HungaryLanugageAll %>%
 sum(HungaryLanugageAll$all_stud)
 ```
 
-### Foregin Language Score Map
+### Foregin Language Score Map - For paper
 
 
 ```{r}
@@ -197,10 +201,40 @@ tm_compass(type = "8star", size = 1, position = c(0.83, 0.15))
 
 ```
 
-### Location Quotient calucaltion
+### Foregin Language Score Map - Interactive
 
 ```{r}
-## Calcualte the SELE langauge exams average by school
+### MAP OF THE LANGUAGE TOTAL SCORE
+tmap_mode("view")
+tm_shape(HungaryLanugageAll) +
+  tm_polygons(col="all_score",
+              style = "jenks",
+              palette = c('#ffffff','#ebf0ff','#bdd7e7' , '#3182bd', '#08519c'),
+              #breaks = c(0, 50, 70, 80,110),
+              midpoint=NA,
+              legend.hist = TRUE,
+              border.alpha = 0.3,
+              popup.vars=c("NAME_2", "all_score"),
+              title="Language Score") +
+tm_shape(slice_head(TopCities, n=10)) + 
+  tm_dots(col = 'red', legend.z = 'city'  , size = 0.2) +
+  #tm_symbols(col = 'grey'  , size = 'population') +
+tm_shape(slice_head(TopCities, n=1)) + 
+ tm_text('city',col='white',shadow = FALSE , size=0.6, ymod = 0.3,fontface="bold") + 
+tm_layout(  legend.hist.bg.color = '#dedede',
+            legend.title.size = 1,
+            legend.outside.size=0.5,
+            legend.outside = TRUE,
+            legend.outside.position = 'right',
+            frame=FALSE
+            )
+
+```
+
+### Location Quotient calucaltion - for paper
+- to observe how areas differ from the national average 
+```{r}
+## Calculate the SELE language exams average by school
 HungaryAverage = sum(HungaryLanugageAll$all_prodsum) / sum(HungaryLanugageAll$all_stud)
 
 ## Create the LQ column
@@ -237,10 +271,37 @@ tm_shape(HungaryLanugageAll) +
   tm_compass(type = "8star", size = 1, position = c(0.83, 0.15))
 
 ```
+### Location Quotient calucaltion - Interactive
+```{r}
+tmap_mode("view")
+tm_shape(HungaryLanugageAll) +
+  tm_polygons(col="all_score_LQ",
+              style = "jenks",
+              palette = 'RdBu',
+              #breaks = c(0, 50, 70, 80,110),
+              midpoint=NA,
+              legend.hist = TRUE,
+              border.alpha = 0.3,
+              popup.vars=c("NAME_2", "all_score"),
+              title="Language Score Location Quotient") +
+  tm_shape(slice_head(TopCities, n=10)) + 
+  tm_dots(col = 'red', legend.z = 'city'  , size = 0.2) +
+  #tm_symbols(col = 'grey'  , size = 'population') +
+  tm_shape(slice_head(TopCities, n=1)) + 
+  tm_text('city',col='white',shadow = FALSE , size=0.6, ymod = 0.3,fontface="bold") + 
+  tm_layout(  legend.hist.bg.color = '#dedede',
+              legend.title.size = 1,
+              legend.outside.size=0.5,
+              legend.outside = TRUE,
+              legend.outside.position = 'right',
+              frame=FALSE
+  )
 
+```
 
 
 ### Global Moran's I 
+- to observe the possibility of spatial autocorrelation 
 
 ```{r}
 
@@ -259,6 +320,7 @@ HungaryLanugageAll_nb <- HungaryLanugageAll %>%
 
 
 ### Plot
+tmap_mode("plot")
 plot(HungaryLanugageAll_nb, st_geometry(coordsW), col="red")
 #add a map underneath
 plot(HungaryLanugageAll$geometry, add=T)
@@ -283,6 +345,7 @@ I_HungaryLanugageAll_Global_Density
 
 
 ### Getis Ord G* 
+- to highlight hot and cold spots in the FLPS of areas
 
 ```{r}
 Gi_FL_score_Local_Density <-  HungaryLanugageAll %>%
@@ -296,7 +359,7 @@ HungaryLanugageAll <- HungaryLanugageAll %>%
 
 
 breaks1<-c(-1000,-2.58,-1.96,-1.65,1.65,1.96,2.58,1000)
-
+tmap_mode("plot")
 tm_shape(HungaryLanugageAll) +
   tm_polygons("density_G",
               palette="-RdBu",
